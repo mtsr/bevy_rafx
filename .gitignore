@@ -1,2 +1,9 @@
 /target
 Cargo.lock
+schedule.dot
+assets/cooked-shaders/
+assets/cooked-shaders/shader.vert.cookedshaderpackage
+assets/processed-shaders/
+assets/processed-shaders/
+assets/processed-shaders/
+assets/processed-shaders/
