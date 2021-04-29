@@ -26,3 +26,9 @@ features = ["bevy_winit"]
 
 [target.'cfg(target_os = "windows")'.dependencies]
 rafx = { path = "../rafx/rafx", features = ["rafx-vulkan", "framework"] }
+
+# [target.'cfg(any(target_os = "macos", target_os = "ios"))'.dependencies]
+# rafx = { path = "../rafx/rafx", features = ["rafx-metal", "framework"] }
+[build-dependencies]
+rafx-shader-processor = { path = "../rafx/rafx-shader-processor" }
+env_logger = "0.6"

@@ -109,7 +109,7 @@ fn setup(windows: Res<Windows>, winit_windows: Res<WinitWindows>, mut bevy_rafx:
     let resource_context = resource_manager.resource_context();
 
     let cooked_shaders_base_path =
-        std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets/cooked_shaders");
+        std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets/cooked-shaders");
 
     // Create the vertex shader module and find the entry point
     let cooked_vertex_shader_stage =
