@@ -1,13 +1,15 @@
 use bevy::prelude::*;
-use bevy_rafx_plugin::{AssetResource, RafxPlugin};
-use mesh_renderer::{assets::MeshAsset, MeshRendererPlugin};
+use bevy_rafx_gltf::GltfPlugin;
+use bevy_rafx_plugin::BevyRafxPlugin;
+use mesh_renderer_plugin::MeshRendererPlugin;
 
 fn main() {
     let mut app = App::build();
 
     app.add_plugins(DefaultPlugins)
-        .add_plugin(RafxPlugin::default())
+        .add_plugin(BevyRafxPlugin::default())
         .add_plugin(MeshRendererPlugin::default())
+        .add_plugin(GltfPlugin)
         .add_startup_system(setup.system());
 
     #[cfg(feature = "print_schedule")]
@@ -16,9 +18,9 @@ fn main() {
     app.run();
 }
 
-fn setup(mut asset_resource: ResMut<AssetResource>) {
-    // let handle: Handle< = asset_server.load("assets/models/Monkey.gltf");
-    asset_resource.load_asset_path::<MeshAsset, _>("assets/models/Monkey.gltf");
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let handle = asset_server.load("models/Monkey.gltf#Scene0");
+    commands.spawn_scene(handle);
 }
 
 #[cfg(feature = "print_schedule")]

@@ -4,24 +4,20 @@ version = "0.0.1"
 edition = "2018"
 
 [workspace]
-members = ["crates/*", "crates/features/*"]
-exclude = ["crates/features"]
+members = ["crates/*"]
+
+[lib]
+name = "bevy_rafx"
+path = "src/lib.rs"
 
 [dependencies]
 bevy_rafx_plugin = { path = "crates/bevy_rafx_plugin" }
-mesh_renderer = { path = "crates/features/mesh_renderer" }
-
-[dependencies.bevy]
-path = "../bevy"
-default-features = false
-features = ["bevy_winit"]
+mesh_renderer_plugin = { path = "crates/mesh_renderer_plugin" }
+bevy_rafx_gltf = { path = "crates/bevy_rafx_gltf" }
+bevy = { version = "0.5", default-features = false, features = ["bevy_winit"] }
 
 [dev-dependencies]
 bevy_mod_debugdump = { version = "0.1.0", default-features = false }
-
-[build-dependencies]
-rafx-shader-processor = { path = "../rafx/rafx-shader-processor" }
-env_logger = "0.6"
 
 [features]
 print_schedule = []
@@ -32,5 +28,7 @@ path = "examples/mesh.rs"
 
 [patch.crates-io]
 bevy = { path = "../bevy" }
+bevy_render = { path = "../bevy/crates/bevy_render" }
+bevy_pbr = { path = "../bevy/crates/bevy_pbr" }
 rafx = { path = "../rafx/rafx" }
 bevy_mod_debugdump = { path = "../bevy_mod_debugdump" }

@@ -1,14 +1,18 @@
 [package]
-name = "mesh_renderer"
+name = "mesh_renderer_plugin"
 version = "0.1.0"
 edition = "2018"
 
+[lib]
+name = "mesh_renderer_plugin"
+path = "src/lib.rs"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
-bevy_rafx_plugin = { path = "../../bevy_rafx_plugin" }
+bevy_rafx_plugin = { path = "../bevy_rafx_plugin" }
 bevy = { version = "0.5", default-features = false, features = ["bevy_winit"] }
-serde = "1.0"
-type-uuid = "0.1"
+bevy_render = { version = "0.5" }
+bevy_pbr = { version = "0.5" }
 
 [target.'cfg(target_os = "windows")'.dependencies]
-rafx = { version = "0.0.12", features = ["rafx-vulkan", "framework", "assets"] }
+rafx = { version = "0.0.12", features = ["rafx-vulkan", "framework"] }
