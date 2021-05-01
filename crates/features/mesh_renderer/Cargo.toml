@@ -1,0 +1,14 @@
+[package]
+name = "mesh_renderer"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[dependencies]
+bevy_rafx_plugin = { path = "../../bevy_rafx_plugin" }
+bevy = { version = "0.5", default-features = false, features = ["bevy_winit"] }
+serde = "1.0"
+type-uuid = "0.1"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+rafx = { version = "0.0.12", features = ["rafx-vulkan", "framework", "assets"] }

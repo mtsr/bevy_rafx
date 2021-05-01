@@ -1,34 +1,36 @@
 [package]
 name = "bevy_rafx"
-version = "0.1.0"
-authors = ["Jonas Matser <github@jonasmatser.nl>"]
+version = "0.0.1"
 edition = "2018"
 
-[[bin]]
-name = "bevy_rafx"
-path = "src/bin.rs"
+[workspace]
+members = ["crates/*", "crates/features/*"]
+exclude = ["crates/features"]
 
-[lib]
-name = "bevy_rafx"
-path = "src/lib.rs"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
-raw-window-handle = "0.3.3"
-lazy_static = "1.4.0"
-bevy_mod_debugdump = { path = "../bevy_mod_debugdump", default-features = false }
-bincode = "1.3.1"
+bevy_rafx_plugin = { path = "crates/bevy_rafx_plugin" }
+mesh_renderer = { path = "crates/features/mesh_renderer" }
 
 [dependencies.bevy]
 path = "../bevy"
 default-features = false
 features = ["bevy_winit"]
 
-[target.'cfg(target_os = "windows")'.dependencies]
-rafx = { path = "../rafx/rafx", features = ["rafx-vulkan", "framework"] }
+[dev-dependencies]
+bevy_mod_debugdump = { version = "0.1.0", default-features = false }
 
-# [target.'cfg(any(target_os = "macos", target_os = "ios"))'.dependencies]
-# rafx = { path = "../rafx/rafx", features = ["rafx-metal", "framework"] }
 [build-dependencies]
 rafx-shader-processor = { path = "../rafx/rafx-shader-processor" }
 env_logger = "0.6"
+
+[features]
+print_schedule = []
+
+[[example]]
+name = "mesh"
+path = "examples/mesh.rs"
+
+[patch.crates-io]
+bevy = { path = "../bevy" }
+rafx = { path = "../rafx/rafx" }
+bevy_mod_debugdump = { path = "../bevy_mod_debugdump" }

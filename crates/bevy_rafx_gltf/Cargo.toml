@@ -1,0 +1,18 @@
+[package]
+name = "bevy_rafx_gltf"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[dependencies]
+bevy = { version = "0.5", default-features = false, features = ["bevy_winit"] }
+distill = "0.0.3"
+mesh_renderer = { path = "../features/mesh_renderer" }
+serde = "1.0"
+type-uuid = "0.1"
+fnv = "1.0"
+gltf = "0.15.2"
+itertools = "0.10.0"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+rafx = { version = "0.0.12", features = ["rafx-vulkan", "framework", "assets"] }
