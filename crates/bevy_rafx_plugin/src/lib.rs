@@ -1,6 +1,9 @@
+use std::fmt::Debug;
+
 use bevy::{
-    log,
+    ecs::reflect::ReflectComponent,
     prelude::{CoreStage, IntoSystem, Plugin, StageLabel, SystemStage},
+    reflect::Reflect,
 };
 use rafx::{
     nodes::FramePacketBuilder,
@@ -56,9 +59,25 @@ fn update_visibility(// mut visibility_region: ResMut<VisibilityRegion>,
 fn create_frame_packet() {
     let _frame_packet_builder = FramePacketBuilder::new();
 }
-#[derive(Default)]
+#[derive(Clone, Default, Reflect)]
+#[reflect(Component)]
 pub struct VisibilityComponent {
-    handle: Option<VisibilityObjectArc>,
+    #[reflect(ignore)]
+    pub handle: Option<VisibilityObjectArc>,
+}
+
+impl Debug for VisibilityComponent {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
+        fmt.debug_struct("VisibilityComponent")
+            .field(
+                "handle",
+                match self.handle {
+                    Some(_) => &Some("VisibilityObjectArc"),
+                    None => &Option::<&str>::None,
+                },
+            )
+            .finish()
+    }
 }
 
 pub trait RenderPlugin: Send + Sync + 'static {}
