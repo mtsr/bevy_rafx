@@ -40,11 +40,11 @@ impl Plugin for MeshRendererPlugin {
         app.register_type::<VisibilityComponent>()
             .add_asset::<Mesh>()
             .add_asset::<StandardMaterial>()
-            .add_system_to_stage(RenderStage::Visibility, update_visibility.system());
+            .add_system_to_stage(RenderStage::Visibility, mesh_update_visibility.system());
     }
 }
 
-fn update_visibility(
+fn mesh_update_visibility(
     mut query: Query<(
         Entity,
         &Handle<Mesh>,
