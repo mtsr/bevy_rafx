@@ -1,6 +1,6 @@
 use bevy::prelude::{
     AddAsset, Added, Assets, ChangeTrackers, Entity, GlobalTransform, Handle, Or, Plugin, Query,
-    QuerySet, Res, Transform, With,
+    QuerySet, Res, ResMut, Transform, With,
 };
 use bevy::{
     ecs::{bundle::Bundle, system::IntoSystem},
@@ -8,7 +8,7 @@ use bevy::{
 };
 
 pub use bevy_pbr::prelude::StandardMaterial;
-use bevy_render::mesh::VertexAttributeValues;
+pub use bevy_render::mesh::VertexAttributeValues;
 pub use bevy_render::{
     color::Color,
     mesh::{self, Mesh},
@@ -18,9 +18,18 @@ pub use bevy_render::{
 
 use bevy_rafx_plugin::{RenderStage, VisibilityComponent};
 use rafx::{
+    base::slab::DropSlabKey,
+    nodes::GenericRenderNodeHandle,
+    nodes::RenderRegistryBuilder,
     rafx_visibility::{PolygonSoup, PolygonSoupIndex},
     visibility::{CullModel, EntityId, VisibilityRegion},
 };
+
+use rafx::render_feature_mod_prelude::*;
+rafx::declare_render_feature!(MeshRenderFeature, MESH_FEATURE_INDEX);
+
+mod extract;
+mod mesh_render_node_set;
 
 #[derive(Bundle, Default)]
 pub struct PbrBundle {
@@ -40,8 +49,18 @@ impl Plugin for MeshRendererPlugin {
         app.register_type::<VisibilityComponent>()
             .add_asset::<Mesh>()
             .add_asset::<StandardMaterial>()
-            .add_system_to_stage(RenderStage::Visibility, mesh_update_visibility.system());
+            .add_startup_system(setup.system())
+            .add_system_to_stage(RenderStage::Visibility, mesh_update_visibility.system())
+            .add_system_to_stage(RenderStage::Extract, mesh_extract.system());
     }
+}
+
+fn setup(mut render_registry_builder_resource: ResMut<Option<RenderRegistryBuilder>>) {
+    let render_registry_builder = render_registry_builder_resource
+        .take()
+        .unwrap()
+        .register_feature::<MeshRenderFeature>();
+    render_registry_builder_resource.replace(render_registry_builder);
 }
 
 fn mesh_update_visibility(
@@ -134,3 +153,5 @@ fn mesh_to_cull_model(mesh: &Mesh) -> CullModel {
         index,
     })
 }
+
+fn mesh_extract() {}
