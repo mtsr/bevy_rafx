@@ -15,9 +15,11 @@ pub use bevy_render::{
 };
 use rafx::{
     nodes::{
-        FramePacketBuilder, RenderFeatureMaskBuilder, RenderPhaseMask, RenderPhaseMaskBuilder,
-        RenderRegistry, RenderRegistryBuilder, RenderViewDepthRange, RenderViewSet,
+        FramePacket, FramePacketBuilder, RenderFeatureMaskBuilder, RenderPhaseMask,
+        RenderPhaseMaskBuilder, RenderRegistry, RenderRegistryBuilder, RenderViewDepthRange,
+        RenderViewSet,
     },
+    rafx_visibility::{DepthRange, PerspectiveParameters, Projection},
     visibility::{VisibilityObjectArc, VisibilityRegion},
 };
 
@@ -37,43 +39,44 @@ pub struct BevyRafxPlugin;
 
 impl Plugin for BevyRafxPlugin {
     fn build(&self, app: &mut bevy::prelude::AppBuilder) {
-        app.insert_resource::<Option<RenderRegistryBuilder>>(
-            Some(RenderRegistryBuilder::default()),
-        )
-        .insert_resource::<Option<RenderRegistry>>(None)
-        .insert_resource(Some(RenderPhaseMaskBuilder::default()))
-        .insert_resource(Some(RenderFeatureMaskBuilder::default()))
-        // .insert_resource(RenderPlugins::default())
-        .insert_resource(VisibilityRegion::new())
-        .add_stage_after(
-            CoreStage::PostUpdate,
-            RenderStage::Visibility,
-            SystemStage::parallel(),
-        )
-        .add_stage_after(
-            RenderStage::Visibility,
-            RenderStage::PreExtract,
-            SystemStage::parallel(),
-        )
-        .add_stage_after(
-            RenderStage::PreExtract,
-            RenderStage::Extract,
-            SystemStage::parallel(),
-        )
-        .add_stage_after(
-            RenderStage::Extract,
-            RenderStage::Prepare,
-            SystemStage::parallel(),
-        )
-        .add_stage_after(
-            RenderStage::Prepare,
-            RenderStage::Submit,
-            SystemStage::parallel(),
-        )
-        .add_startup_system_to_stage(StartupStage::PostStartup, build_render_registry.system())
-        .add_system_to_stage(RenderStage::Visibility, update_visibility.system())
-        .add_system_to_stage(RenderStage::PreExtract, create_frame_packet.system())
-        .add_system_to_stage(RenderStage::Extract, create_frame_packet.system());
+        app
+            // Improve ergonomics of Options, maybe replace_with?
+            .insert_resource::<Option<RenderRegistryBuilder>>(
+                Some(RenderRegistryBuilder::default()),
+            )
+            .insert_resource::<Option<RenderRegistry>>(None)
+            .insert_resource(Some(RenderPhaseMaskBuilder::default()))
+            .insert_resource(Some(RenderFeatureMaskBuilder::default()))
+            .insert_resource(FramePacketBuilder::new())
+            .insert_resource::<Option<FramePacket>>(None)
+            .insert_resource(VisibilityRegion::new())
+            .add_stage_after(
+                CoreStage::PostUpdate,
+                RenderStage::Visibility,
+                SystemStage::parallel(),
+            )
+            .add_stage_after(
+                RenderStage::Visibility,
+                RenderStage::PreExtract,
+                SystemStage::parallel(),
+            )
+            .add_stage_after(
+                RenderStage::PreExtract,
+                RenderStage::Extract,
+                SystemStage::parallel(),
+            )
+            .add_stage_after(
+                RenderStage::Extract,
+                RenderStage::Prepare,
+                SystemStage::parallel(),
+            )
+            .add_stage_after(
+                RenderStage::Prepare,
+                RenderStage::Submit,
+                SystemStage::parallel(),
+            )
+            .add_startup_system_to_stage(StartupStage::PostStartup, build_render_registry.system())
+            .add_system_to_stage(RenderStage::PreExtract, build_frame_packet.system());
         // TODO extract window etc
     }
 }
@@ -90,12 +93,9 @@ fn build_render_registry(
     render_registry.replace(render_registry_builder.build());
 }
 
-fn update_visibility(// mut visibility_region: ResMut<VisibilityRegion>,
-    // query: Query<(Entity, &GlobalTransform, &mut VisibilityComponent)>,
-) {
-}
-
-fn create_frame_packet(
+fn build_frame_packet(
+    mut frame_packet_resource: ResMut<Option<FramePacket>>,
+    mut frame_packet_builder_resource: ResMut<FramePacketBuilder>,
     mut render_feature_mask_builder: ResMut<Option<RenderFeatureMaskBuilder>>,
     mut render_phase_mask_builder: ResMut<Option<RenderPhaseMaskBuilder>>,
     visibility_region: Res<VisibilityRegion>,
@@ -103,6 +103,14 @@ fn create_frame_packet(
     // TODO different projections
     query: Query<(&Camera, &PerspectiveProjection, &GlobalTransform)>,
 ) {
+    // Swap in the new frame_packet_builder for next frame
+    let mut frame_packet_builder = FramePacketBuilder::new();
+    std::mem::swap(
+        &mut *frame_packet_builder_resource,
+        &mut frame_packet_builder,
+    );
+
+    // TODO remove, just for testing
     // TODO multiple cameras
     let window = windows.get_primary().unwrap();
     let extents = (window.physical_width(), window.physical_height());
@@ -126,11 +134,21 @@ fn create_frame_packet(
 
     let view_frustum = visibility_region.register_view_frustum();
 
+    let projection = Projection::Perspective(PerspectiveParameters::new(
+        projection.fov,
+        projection.aspect_ratio,
+        projection.near,
+        projection.far,
+        DepthRange::Normal,
+    ));
+
+    view_frustum.set_projection(&projection);
+
     let main_view = render_view_set.create_view(
         view_frustum,
         global_transform.translation,
         global_transform.compute_matrix(),
-        projection.get_projection_matrix(),
+        projection.as_rh_mat4(),
         extents,
         depth_range,
         render_phase_mask,
@@ -138,7 +156,10 @@ fn create_frame_packet(
         camera.name.clone().unwrap(),
     );
 
-    let _frame_packet_builder = FramePacketBuilder::new();
+    frame_packet_builder.query_visibility_and_add_results(&main_view, &visibility_region);
+
+    // build the frame packet and update the resource
+    frame_packet_resource.replace(frame_packet_builder.build());
 }
 #[derive(Clone, Default, Reflect)]
 #[reflect(Component)]
@@ -160,8 +181,3 @@ impl Debug for VisibilityComponent {
             .finish()
     }
 }
-
-// TODO alternative to Plugins registering themselves with each separate resource.
-// This could wrap up all the things that plugins may want to register, to make it easier.
-// pub trait RenderPlugin: Send + Sync + 'static {}
-// pub type RenderPlugins = Vec<Box<dyn RenderPlugin>>;
