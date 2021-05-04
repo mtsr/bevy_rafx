@@ -14,11 +14,11 @@ pub use bevy_render::{
     camera::{Camera, CameraProjection, OrthographicProjection, PerspectiveProjection},
     entity::PerspectiveCameraBundle,
 };
+pub use rafx::nodes::{RenderFeatureMask, RenderFeatureMaskBuilder};
 use rafx::{
     nodes::{
-        FramePacket, FramePacketBuilder, RenderFeatureMask, RenderFeatureMaskBuilder,
-        RenderPhaseMask, RenderPhaseMaskBuilder, RenderRegistry, RenderRegistryBuilder,
-        RenderViewDepthRange, RenderViewSet,
+        FramePacket, FramePacketBuilder, RenderPhaseMask, RenderPhaseMaskBuilder, RenderRegistry,
+        RenderRegistryBuilder, RenderViewDepthRange, RenderViewSet,
     },
     rafx_visibility::{DepthRange, PerspectiveParameters, Projection},
     visibility::{VisibilityObjectArc, VisibilityRegion},
@@ -100,7 +100,12 @@ fn create_main_view(
     visibility_region: Res<VisibilityRegion>,
     mut frame_packet_builder_resource: ResMut<FramePacketBuilder>,
     // TODO different projections
-    query: Query<(&Camera, &PerspectiveProjection, &GlobalTransform)>,
+    query: Query<(
+        &Camera,
+        &PerspectiveProjection,
+        &GlobalTransform,
+        &RenderFeatureMask,
+    )>,
 ) {
     // TODO multiple cameras
     let window = windows.get_primary().unwrap();
@@ -110,9 +115,7 @@ fn create_main_view(
         .add_render_phase::<phases::opaque_render_phase::OpaqueRenderPhase>()
         .build();
 
-    let render_feature_mask = RenderFeatureMaskBuilder::default().build();
-
-    let (camera, projection, global_transform) = query.single().unwrap();
+    let (camera, projection, global_transform, render_feature_mask) = query.single().unwrap();
 
     let depth_range = RenderViewDepthRange::new(projection.near, projection.far);
 
@@ -144,7 +147,7 @@ fn create_main_view(
         extents,
         depth_range,
         render_phase_mask,
-        render_feature_mask,
+        render_feature_mask.clone(),
         camera.name.clone().unwrap(),
     );
 
