@@ -43,7 +43,7 @@ impl Plugin for BevyRafxPlugin {
         .insert_resource::<Option<RenderRegistry>>(None)
         .insert_resource(Some(RenderPhaseMaskBuilder::default()))
         .insert_resource(Some(RenderFeatureMaskBuilder::default()))
-        .insert_resource(RenderPlugins::default())
+        // .insert_resource(RenderPlugins::default())
         .insert_resource(VisibilityRegion::new())
         .add_stage_after(
             CoreStage::PostUpdate,
@@ -161,6 +161,7 @@ impl Debug for VisibilityComponent {
     }
 }
 
-pub trait RenderPlugin: Send + Sync + 'static {}
-
-pub type RenderPlugins = Vec<Box<dyn RenderPlugin>>;
+// TODO alternative to Plugins registering themselves with each separate resource.
+// This could wrap up all the things that plugins may want to register, to make it easier.
+// pub trait RenderPlugin: Send + Sync + 'static {}
+// pub type RenderPlugins = Vec<Box<dyn RenderPlugin>>;
