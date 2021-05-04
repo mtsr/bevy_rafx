@@ -72,7 +72,9 @@ impl Plugin for BevyRafxPlugin {
         )
         .add_startup_system_to_stage(StartupStage::PostStartup, build_render_registry.system())
         .add_system_to_stage(RenderStage::Visibility, update_visibility.system())
-            .add_system_to_stage(RenderStage::Extract, create_frame_packet.system());
+        .add_system_to_stage(RenderStage::PreExtract, create_frame_packet.system())
+        .add_system_to_stage(RenderStage::Extract, create_frame_packet.system());
+        // TODO extract window etc
     }
 }
 
@@ -93,7 +95,49 @@ fn update_visibility(// mut visibility_region: ResMut<VisibilityRegion>,
 ) {
 }
 
-fn create_frame_packet() {
+fn create_frame_packet(
+    mut render_feature_mask_builder: ResMut<Option<RenderFeatureMaskBuilder>>,
+    mut render_phase_mask_builder: ResMut<Option<RenderPhaseMaskBuilder>>,
+    visibility_region: Res<VisibilityRegion>,
+    windows: Res<Windows>,
+    // TODO different projections
+    query: Query<(&Camera, &PerspectiveProjection, &GlobalTransform)>,
+) {
+    // TODO multiple cameras
+    let window = windows.get_primary().unwrap();
+    let extents = (window.physical_width(), window.physical_height());
+
+    let (camera, projection, global_transform) = query.single().unwrap();
+
+    let depth_range = RenderViewDepthRange::new(projection.near, projection.far);
+
+    let render_phase_mask = render_phase_mask_builder
+        .replace(RenderPhaseMaskBuilder::default())
+        .unwrap()
+        .add_render_phase::<phases::opaque_render_phase::OpaqueRenderPhase>()
+        .build();
+
+    let render_feature_mask = render_feature_mask_builder
+        .replace(RenderFeatureMaskBuilder::default())
+        .unwrap()
+        .build();
+
+    let render_view_set = RenderViewSet::default();
+
+    let view_frustum = visibility_region.register_view_frustum();
+
+    let main_view = render_view_set.create_view(
+        view_frustum,
+        global_transform.translation,
+        global_transform.compute_matrix(),
+        projection.get_projection_matrix(),
+        extents,
+        depth_range,
+        render_phase_mask,
+        render_feature_mask,
+        camera.name.clone().unwrap(),
+    );
+
     let _frame_packet_builder = FramePacketBuilder::new();
 }
 #[derive(Clone, Default, Reflect)]

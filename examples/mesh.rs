@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_rafx_gltf::GltfPlugin;
-use bevy_rafx_plugin::BevyRafxPlugin;
+use bevy_rafx_plugin::{BevyRafxPlugin, PerspectiveCameraBundle};
 use mesh_renderer_plugin::MeshRendererPlugin;
 
 fn main() {
@@ -21,6 +21,8 @@ fn main() {
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     let handle = asset_server.load("models/Monkey.gltf#Scene0");
     commands.spawn_scene(handle);
+
+    commands.spawn_bundle(PerspectiveCameraBundle::new_3d());
 }
 
 #[cfg(feature = "print_schedule")]

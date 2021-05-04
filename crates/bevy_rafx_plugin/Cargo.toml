@@ -14,6 +14,7 @@ raw-window-handle = "0.3.3"
 lazy_static = "1.4.0"
 bincode = "1.3.1"
 bevy = { version = "0.5", default-features = false, features = ["bevy_winit"] }
+bevy_render = { version = "0.5" }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 rafx = { version = "0.0.12", features = ["rafx-vulkan", "framework"] }
