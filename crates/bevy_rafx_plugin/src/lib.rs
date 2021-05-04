@@ -71,6 +71,7 @@ impl Plugin for BevyRafxPlugin {
             SystemStage::parallel(),
         )
         .add_startup_system_to_stage(StartupStage::PostStartup, build_render_registry.system())
+        .add_system_to_stage(RenderStage::Visibility, update_visibility.system())
             .add_system_to_stage(RenderStage::Extract, create_frame_packet.system());
     }
 }
